@@ -1,0 +1,8 @@
+username : WQXYjLP8PkrdRfCBjgGaECnh
+password : 3a9SPEpKbXxFqUkjwzBWqwkq
+
+cd /etc/openvpn
+ls
+sudo openvpn
+
+fr-bod.prod.surfshark.com_tcp.ovpn
