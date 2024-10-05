@@ -3,7 +3,7 @@ import sys
 import csv
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import (QApplication, QLabel, QListWidget, QListWidgetItem, QMainWindow, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QFrame)
+from PyQt6.QtWidgets import (QApplication, QLabel, QListWidget, QListWidgetItem, QMainWindow, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QSizePolicy, QSpacerItem)
 
 
 # Main window :
@@ -75,46 +75,27 @@ class MainWindow(QMainWindow):
         self.separator_item = None
         self.connected_item = None
 
-        # Widgets and layouts :
-        central_widget = QWidget()
-        central_widget.setObjectName("central_widget")
-        self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
-        main_frame = QFrame()
-
-        title_label = QLabel("Skynet portal")
-        title_label.setObjectName("title_label")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(title_label)
-
-        # Top left layout : (connection infos)
-        left_layout = QVBoxLayout()
+        # Define widgets :
+        self.title_label = QLabel("Skynet portal")
+        self.title_label.setObjectName("title_label")
+        self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.status_label = QLabel(f"Connection status: {self.connected_status}")
         self.status_label.setObjectName("status_label")
-        left_layout.addWidget(self.status_label)
 
         self.address_label = QLabel(f"Connected to : {self.vpn_address}")
         self.address_label.setObjectName("address_label")
-        left_layout.addWidget(self.address_label)
 
         self.location_label = QLabel(f"Location: {self.server_location}")
         self.location_label.setObjectName("location_label")
-        left_layout.addWidget(self.location_label)
-
-        # Top right layout : (connection button)
-        right_layout = QHBoxLayout(main_frame)
-        right_layout.addLayout(left_layout)  # nest the right layout inside the left one
 
         self.connect_button = QPushButton("Connect")
         self.connect_button.setFixedSize(150, 100)
         self.connect_button.setObjectName("connect_button")
         self.connect_button.clicked.connect(self.toggle_connection)
-        right_layout.addWidget(self.connect_button, alignment=Qt.AlignmentFlag.AlignRight)
 
-        main_layout.addWidget(main_frame)
+        self.horizontal_spacer = QSpacerItem(0, 40, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
-        # Address list :
         self.address_list = QListWidget()
         self.address_list.setSortingEnabled(True)
         self.add_items_to_list(self.address_list, [
@@ -123,7 +104,36 @@ class MainWindow(QMainWindow):
             {"text": "ge.yyy.yyy"},
             {"text": "us.zzz.zzz"},
         ])
-        main_layout.addWidget(self.address_list)
+
+        self.vertical_spacer = QSpacerItem(20, 40, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        # Define layouts :
+        self.main_layout = QVBoxLayout()
+        self.top_layout = QVBoxLayout()
+        self.bottom_layout = QHBoxLayout()
+        self.top_sub_layout = QHBoxLayout()
+        self.top_sub_left_layout = QVBoxLayout()
+        self.top_sub_right_layout = QVBoxLayout()
+
+        # Nest layouts and add widgets :
+        self.main_layout.addLayout(self.top_layout)
+        self.main_layout.addSpacerItem(self.horizontal_spacer)
+        self.main_layout.addLayout(self.bottom_layout)
+        self.top_layout.addWidget(self.title_label)
+        self.top_layout.addLayout(self.top_sub_layout)
+        self.top_sub_layout.addLayout(self.top_sub_left_layout)
+        self.top_sub_layout.addLayout(self.top_sub_right_layout)
+        self.top_sub_left_layout.addWidget(self.status_label)
+        self.top_sub_left_layout.addWidget(self.address_label)
+        self.top_sub_left_layout.addWidget(self.location_label)
+        self.top_sub_right_layout.addWidget(self.connect_button, alignment=Qt.AlignmentFlag.AlignRight)
+        self.bottom_layout.addWidget(self.address_list)
+        self.bottom_layout.addSpacerItem(self.vertical_spacer)
+
+        # Define central widget :
+        self.central_widget = QWidget()
+        self.central_widget.setLayout(self.main_layout)
+        self.setCentralWidget(self.central_widget)
 
     def add_items_to_list(self, list_widget, items):
         """
