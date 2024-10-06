@@ -1,10 +1,18 @@
+'''
+TODO :
+
+https://doc.qt.io/qtforpython-6.2/PySide6/QtWidgets/QDockWidget.html
+https://www.pythonguis.com/tutorials/pyqt6-actions-toolbars-menus/
+
+'''
+
 # Imports :
 import sys
 import csv
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QApplication, QLabel, QListWidget, QListWidgetItem, QMainWindow, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QSizePolicy, QSpacerItem)
-
+import subprocess
 
 # Main window :
 class MainWindow(QMainWindow):
@@ -76,7 +84,7 @@ class MainWindow(QMainWindow):
         self.connected_item = None
 
         # Define widgets :
-        self.title_label = QLabel("Skynet portal")
+        self.title_label = QLabel("Nebula")
         self.title_label.setObjectName("title_label")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -98,12 +106,8 @@ class MainWindow(QMainWindow):
 
         self.address_list = QListWidget()
         self.address_list.setSortingEnabled(True)
-        self.add_items_to_list(self.address_list, [
-            {"text": "fr.xxx.xxx"},
-            {"text": "test_afghanistan"},
-            {"text": "ge.yyy.yyy"},
-            {"text": "us.zzz.zzz"},
-        ])
+        self.initial_vpn_list = self.list_vpns()
+        self.add_items_to_list(self.address_list, [{"text": vpn} for vpn in self.initial_vpn_list])
 
         self.vertical_spacer = QSpacerItem(20, 40, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
@@ -151,6 +155,15 @@ class MainWindow(QMainWindow):
             list_item.setSizeHint(QSize(200, 40))  # Set item size
             list_widget.setIconSize(QSize(20, 20))  # Set icon size
             list_widget.addItem(list_item)
+
+    def list_vpns(self):
+        """
+        Use subprocess.run() to execute the command : ls /etc/openvpn -Iserver -Iclient -Iconfigurations
+        and return the list of vpns
+        """
+        output = subprocess.run(['/bin/ls', '/etc/openvpn', '-Iclient', '-Iserver', '-Iconfigurations'], capture_output=True, text=True)
+        vpn_list = output.stdout.splitlines()
+        return vpn_list
 
     def toggle_connection(self):
         """

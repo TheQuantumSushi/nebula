@@ -15,6 +15,7 @@ It uses PyQT6 to provide a GUI to openvpn, executing bash commands and using a c
 - Intuitive, user-friendly GUI
 - Information display about the VPNs when selected (WIP)
 - Handle multiple address sources such as SoftEther or SurfShark through openVPN (todo)
+- Manual VPN addition (WIP)
 - Configuration file for multiple user authentification and account switching (todo)
 - Display torrenting ratio and up/down speed informations (todo)
 - Light/dark mode (todo)
