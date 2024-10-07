@@ -10,74 +10,28 @@ https://www.pythonguis.com/tutorials/pyqt6-actions-toolbars-menus/
 import sys
 import csv
 import re
+import json
+import subprocess
+import sass
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QApplication, QLabel, QListWidget, QListWidgetItem, QMainWindow, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QSizePolicy, QSpacerItem, QScrollArea)
-import subprocess
 
 # Main window :
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        # Load config.json file :
+        with open("config.json") as config_file:
+            self.config = json.load(config_file)
+        self.vpn_paths = self.config["paths"]["vpns"]
+
         # Window style :
         self.setWindowTitle(' ')
         self.showMaximized()
-        self.setStyleSheet("""
-            QWidget#central_widget {
-                background-color: #2c2c2c; /* Background color */
-            }
-            QListWidget {
-                background-color: #2c2c2c; /* List background color */
-                border:1px solid #FFFFFF;
-                padding: 5px;
-            }
-            QListWidget::item {
-                background-color: #2c2c2c; /* Item background color */
-                margin: 5px;
-                padding: 10px;
-                border-radius: 10px;
-                color: white; /* Item text color */
-            }
-            QListWidget::item:selected {
-                background-color: #595454; /* Selected item background color */
-            }
-            QLabel#title_label {
-                font-size: 28px;
-                font-weight: bold;
-                color: white; /* Main title text color */
-            }
-            QLabel#status_label {
-                font-size: 18px;
-                font-weight: bold;
-                color: white; /* Small title text color */
-            }
-            QLabel#address_label {
-                font-size: 14px;
-                color: white; /* Text line color */
-            }
-            QLabel#location_label {
-                font-size: 14px;
-                color: white; /* Text line color */
-            }
-            QPushButton {
-                font-size: 16px;
-                font-weight: bold;
-                padding: 10px;
-                border-radius: 10px;
-            }
-            QPushButton#connect_button {
-                background-color: #4CAF50;  /* Green for connect */
-                color: white; /* Button text color */
-            }
-            QPushButton#disconnect_button {
-                background-color: #f44336;  /* Red for disconnect */
-                color: white; /* Button text color */
-            }
-            QScrollArea {
-                border: 2px solid white;
-            }
-        """)
+        self.stylesheet = self.compile_stylesheet('config.json')
+        self.setStyleSheet(self.stylesheet)
 
         # Variables :
         self.connected = False
@@ -158,7 +112,9 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
     def add_console_line(self, text):
-        """Add a new line of text to the display."""
+        """
+        Add a new line of text to the terminal console
+        """
         self.console_lines.append(text)
         self.console.setText("<br>".join(self.console_lines))
 
@@ -181,11 +137,12 @@ class MainWindow(QMainWindow):
 
     def list_vpns(self):
         """
-        Use subprocess.run() to execute the command : ls /etc/openvpn -Iserver -Iclient -Iconfigurations
-        and return the list of vpns
+        Use subprocess.run() to execute the commands : ls (paths) -Iserver -Iclient -Iconfigurations
+        and return the list of vpns present in all paths specified in the config.json
         """
-        output = subprocess.run(['/bin/ls', '/etc/openvpn', '-Iclient', '-Iserver', '-Iconfigurations'], capture_output=True, text=True)
-        vpn_list = output.stdout.splitlines()
+        vpn_list = []
+        for path in self.vpn_paths:
+            vpn_list = vpn_list + subprocess.run(['/bin/ls', path, '-Iclient', '-Iserver', '-Iconfigurations'], capture_output=True, text=True).stdout.splitlines()
         return vpn_list
 
     def toggle_connection(self):
@@ -293,6 +250,83 @@ class MainWindow(QMainWindow):
         Handle selection of items in the list
         """
         pass
+
+    def compile_stylesheet(self, json_file):
+        """
+        Compile a Scss file into CSS for the window's stylesheet to allow reading variables from config.json
+        """
+        with open(json_file, 'r') as config_file:
+            config = json.load(config_file)
+        colors = config["colors"]
+        scss_content="""
+            $background_color: {background_color};
+            $list_background_color: {list_background_color};
+            $border_color: {border_color};
+            $item_background_color: {item_background_color};
+            $selected_item_background_color: {selected_item_background_color};
+            $main_text_color: {main_text_color};
+            $small_text_color: {small_text_color};
+            $button_text_color: {button_text_color};
+            $connect_button_color: {connect_button_color};
+            $disconnect_button_color: {disconnect_button_color};
+            $scroll_border_color: {scroll_border_color};
+            QWidget#central_widget {{
+                background-color: $background_color;
+            }}
+            QListWidget {{
+                background-color: $list_background_color;
+                border:1px solid $border_color;
+                padding: 5px;
+            }}
+            QListWidget::item {{
+                background-color: $item_background_color;
+                margin: 5px;
+                padding: 10px;
+                border-radius: 10px;
+                color: $border_color;
+            }}
+            QListWidget::item:selected {{
+                background-color: $selected_item_background_color;
+            }}
+            QLabel#title_label {{
+                font-size: 28px;
+                font-weight: bold;
+                color: $main_text_color;
+            }}
+            QLabel#status_label {{
+                font-size: 18px;
+                font-weight: bold;
+                color: $small_text_color;
+            }}
+            QLabel#address_label {{
+                font-size: 14px;
+                color: $small_text_color;
+            }}
+            QLabel#location_label {{
+                font-size: 14px;
+                color: $small_text_color;
+            }}
+            QPushButton {{
+                font-size: 16px;
+                font-weight: bold;
+                padding: 10px;
+                border-radius: 10px;
+            }}
+            QPushButton#connect_button {{
+                background-color: $connect_button_color;
+                color: white;
+            }}
+            QPushButton#disconnect_button {{
+                background-color: $disconnect_button_color;
+                color: white;
+            }}
+            QScrollArea {{
+                border: 2px solid $scroll_border_color;
+            }}
+        """
+        scss_formatted = scss_content.format(**colors)
+        stylesheet = sass.compile(string=scss_formatted)
+        return stylesheet
     
 # Start the application :
 if __name__ == '__main__':

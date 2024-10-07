@@ -1,0 +1,20 @@
+{
+  "paths": {
+    "vpns":["/etc/openvpn"],
+    "flags":"flags"
+  },
+  "colors": {
+    "background_color": "#2c2c2c",
+    "list_background_color": "#2c2c2c",
+    "border_color": "#FFFFFF",
+    "item_background_color": "#2c2c2c",
+    "selected_item_background_color": "#595454",
+    "main_text_color": "white",
+    "small_text_color": "white",
+    "button_text_color": "white",
+    "connect_button_color": "#4CAF50",
+    "disconnect_button_color": "#f44336",
+    "scroll_border_color": "white"
+  }
+
+}

@@ -1,0 +1,72 @@
+
+$background-color: #2c2c2c;
+$list-background-color: #2c2c2c;
+$border-color: #FFFFFF;
+$item-background-color: #2c2c2c;
+$selected-item-background-color: #595454;
+$main-text-color: white;
+$small-text-color: white;
+$button-text-color: white;
+$connect-button-color: #4CAF50;
+$disconnect-button-color: #f44336;
+$scroll-border-color: white;
+
+QWidget#central_widget {
+    background-color: $background-color; /* Background color */
+}
+
+QListWidget {
+    background-color: $list-background-color; /* List background color */
+    border: 1px solid $border-color;
+    padding: 5px;
+}
+
+QListWidget::item {
+    background-color: $item-background-color; /* Item background color */
+    margin: 5px;
+    padding: 10px;
+    border-radius: 10px;
+    color: $main-text-color; /* Item text color */
+}
+
+QListWidget::item:selected {
+    background-color: $selected-item-background-color; /* Selected item background color */
+}
+
+QLabel#title_label {
+    font-size: 28px;
+    font-weight: bold;
+    color: $main-text-color; /* Main title text color */
+}
+
+QLabel#status_label {
+    font-size: 18px;
+    font-weight: bold;
+    color: $main-text-color; /* Small title text color */
+}
+
+QLabel#address_label, QLabel#location_label {
+    font-size: 14px;
+    color: $small-text-color; /* Text line color */
+}
+
+QPushButton {
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+QPushButton#connect_button {
+    background-color: $connect-button-color;  /* Green for connect */
+    color: $button-text-color; /* Button text color */
+}
+
+QPushButton#disconnect_button {
+    background-color: $disconnect-button-color;  /* Red for disconnect */
+    color: $button-text-color; /* Button text color */
+}
+
+QScrollArea {
+    border: 2px solid $scroll-border-color;
+}
