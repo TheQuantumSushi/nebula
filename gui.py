@@ -9,9 +9,10 @@ https://www.pythonguis.com/tutorials/pyqt6-actions-toolbars-menus/
 # Imports :
 import sys
 import csv
+import re
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import (QApplication, QLabel, QListWidget, QListWidgetItem, QMainWindow, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QSizePolicy, QSpacerItem)
+from PyQt6.QtWidgets import (QApplication, QLabel, QListWidget, QListWidgetItem, QMainWindow, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QSizePolicy, QSpacerItem, QScrollArea)
 import subprocess
 
 # Main window :
@@ -73,6 +74,9 @@ class MainWindow(QMainWindow):
                 background-color: #f44336;  /* Red for disconnect */
                 color: white; /* Button text color */
             }
+            QScrollArea {
+                border: 2px solid white;
+            }
         """)
 
         # Variables :
@@ -82,6 +86,7 @@ class MainWindow(QMainWindow):
         self.server_location = ""
         self.separator_item = None
         self.connected_item = None
+        self.console_lines = []
 
         # Define widgets :
         self.title_label = QLabel("Nebula")
@@ -106,10 +111,20 @@ class MainWindow(QMainWindow):
 
         self.address_list = QListWidget()
         self.address_list.setSortingEnabled(True)
+        self.address_list.itemSelectionChanged.connect(self.handle_selection)
         self.initial_vpn_list = self.list_vpns()
         self.add_items_to_list(self.address_list, [{"text": vpn} for vpn in self.initial_vpn_list])
 
-        self.vertical_spacer = QSpacerItem(20, 40, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.horizontal_spacer_2 = QSpacerItem(0, 100, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.console = QLabel(self)
+        self.console.setWordWrap(True)
+        self.console.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)  # Align to top-left
+        self.console.setSizePolicy(self.console.sizePolicy().horizontalPolicy(), self.console.sizePolicy().verticalPolicy().Expanding)
+        self.add_console_line(">>>")
+        self.console_scroll_area = QScrollArea(self)
+        self.console_scroll_area.setWidgetResizable(True)
+        self.console_scroll_area.setWidget(self.console)
 
         # Define layouts :
         self.main_layout = QVBoxLayout()
@@ -118,6 +133,7 @@ class MainWindow(QMainWindow):
         self.top_sub_layout = QHBoxLayout()
         self.top_sub_left_layout = QVBoxLayout()
         self.top_sub_right_layout = QVBoxLayout()
+        self.bottom_right_layout = QVBoxLayout()
 
         # Nest layouts and add widgets :
         self.main_layout.addLayout(self.top_layout)
@@ -132,12 +148,19 @@ class MainWindow(QMainWindow):
         self.top_sub_left_layout.addWidget(self.location_label)
         self.top_sub_right_layout.addWidget(self.connect_button, alignment=Qt.AlignmentFlag.AlignRight)
         self.bottom_layout.addWidget(self.address_list)
-        self.bottom_layout.addSpacerItem(self.vertical_spacer)
+        self.bottom_layout.addLayout(self.bottom_right_layout)
+        self.bottom_right_layout.addSpacerItem(self.horizontal_spacer_2)
+        self.bottom_right_layout.addWidget(self.console_scroll_area)
 
         # Define central widget :
         self.central_widget = QWidget()
         self.central_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.central_widget)
+
+    def add_console_line(self, text):
+        """Add a new line of text to the display."""
+        self.console_lines.append(text)
+        self.console.setText("<br>".join(self.console_lines))
 
     def add_items_to_list(self, list_widget, items):
         """
@@ -265,15 +288,12 @@ class MainWindow(QMainWindow):
         # Enable sorting
         self.address_list.setSortingEnabled(True)
 
-    '''
     def handle_selection(self):
         """
         Handle selection of items in the list
         """
         pass
-    '''
-
-
+    
 # Start the application :
 if __name__ == '__main__':
     app = QApplication(sys.argv)
