@@ -41,6 +41,7 @@ class MainWindow(QMainWindow):
         self.separator_item = None
         self.connected_item = None
         self.console_lines = []
+        self.SUDO_PASSWORD = 'nice try, but still working on hiding this'
 
         # Define widgets :
         self.title_label = QLabel("Nebula")
@@ -154,6 +155,7 @@ class MainWindow(QMainWindow):
             if not self.connected:  # Connect
                 self.connected = True
                 self.vpn_address = selected_item.text()
+                self.run_openvpn(self.vpn_address)
                 self.connected_item = selected_item
                 self.connected_status = "on"
 
@@ -327,6 +329,23 @@ class MainWindow(QMainWindow):
         scss_formatted = scss_content.format(**colors)
         stylesheet = sass.compile(string=scss_formatted)
         return stylesheet
+
+    def run_openvpn(self, address):
+        # Start the subprocess :
+        process = subprocess.Popen(['/bin/sudo', '-S', 'openvpn', '/etc/openvpn/'+address], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        # Send the password to the process :
+        process.stdin.write(self.SUDO_PASSWORD + '\n')
+        process.stdin.flush()
+        # Continuously read the output :
+        try:
+            for line in process.stdout:
+                print(line, end='')
+        except Exception as e:
+            print(f"Error: {e}")
+        finally:
+            process.stdout.close()
+            process.stderr.close()
+            process.wait()
     
 # Start the application :
 if __name__ == '__main__':
