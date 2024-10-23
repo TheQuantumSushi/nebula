@@ -3,13 +3,12 @@ from argon2 import PasswordHasher
 
 class Encrypter:
   """
-  An encrypter class that handles sudo passwords by hashing them through Argon2
-  (with parameters adaptated from machine specs) and safely storing the through keyring
+  Handle sudo passwords by hashing them through Argon2 (with parameters adaptated from machine specs) and safely storing the through keyring
   """
   def __init__(self):
     self.ph = PasswordHasher()
 
-  def adjust_argon2_parameters():
+  def adjust_argon2_parameters(self):
     """
     Retrieve system specifications and user parameters (maximum values allowed) to adjust Argon2 parameters dynamically
     """
@@ -41,14 +40,15 @@ class Encrypter:
     # Update hasher :
     self.ph = PasswordHasher(time_cost = time_cost, memory_cost = memory_cost, parallelism = parallelism)
 
-  def encrypt_password(password):
+  def encrypt_password(self, password):
     """
     Encrypt the password using Argon2 hashing and store it through keyring
     """
+    self.adjust_argon2_parameters()
     hashed_password = self.ph.hash(password)
     keyring.set_password("system", "sudo_hashed", "hashed_password")
 
-  def check_password(checked_password):
+  def check_password(self, checked_password):
     """
     Check if the provided password is correct
     """
