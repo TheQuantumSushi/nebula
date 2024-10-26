@@ -85,13 +85,12 @@ class LogWriter:
 if __name__ == "__main__":
     logger = LogWriter("log.txt")
     logger.write("DEBUG", {"message":"hey, LogWriter.py works !"})
-    # Example of logging commands for every type of events (to copy paste from so that arguments are already written)
-    """
-    logger.write("COMMAND", {"command":"", "requires sudo":"", "invoker":"", "output (STDOUT stream)":"", "errors (STDERR Stream)":""})
-    logger.write("INFO", {"message":""})
-    logger.write("DEBUG", {"message":""})
-    logger.write("ACTION", {"message":"", "raised by":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}"})
-    logger.write("WARNING", {"message":"", "raised by":""})
-    logger.write("EVENT", {"event":"","triggered by":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
-    logger.write("ACTION", {"action":"", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
-    """
+# Example of logging commands for every type of events (to copy paste from so that arguments are already written)
+"""
+logger.write("COMMAND", {"command":"", "requires sudo":"", "invoker":"", "output (STDOUT stream)":"", "errors (STDERR Stream)":""})
+logger.write("INFO", {"message":""})
+logger.write("DEBUG", {"message":""})
+logger.write("WARNING", {"message":"", "raised by":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}"})
+logger.write("EVENT", {"event":"","triggered by":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+logger.write("ACTION", {"action":"", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+"""

@@ -5,6 +5,7 @@ import sys
 import shlex
 import inspect
 import os
+import keyring
 
 class CommandError(Exception):
     """
@@ -40,7 +41,7 @@ class CommandRunner:
                     # Write to log file :
                     logger.write("ACTION", {"action":"retrieve sudo password from keyring", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
                 except:
-                    raise CommandError("no sudo password given as argument or defined in keyring", self.command)
+                    raise CommandError("no sudo password given as argument or defined in keyring", self.command, self.logger)
                     sys.exit(1)
             else:
                 self.sudo_password = sudo_password
@@ -72,7 +73,7 @@ class CommandRunner:
         """
 
         # Write to log file :
-        logger.write("ACTION", {"action":f"run command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+        self.logger.write("ACTION", {"action":f"run command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
         def target():
             """
@@ -80,7 +81,7 @@ class CommandRunner:
             """
 
             # Format the command to a list usable by subprocess.Popen and include sudo if required :
-            self.formatted_command = shlex.split(f"echo {self.sudo_password} | sudo -S " + self.command) if self.sudo_required else shlex.split(self.command)
+            self.formatted_command = shlex.split(f"/bin/echo {self.sudo_password} | sudo -S " + self.command) if self.sudo_required else shlex.split(self.command)
 
             # Create the command-executing process :
             self.process = subprocess.Popen(
@@ -91,33 +92,33 @@ class CommandRunner:
                 bufsize = 1
             )
             # Write to log file :
-            logger.write("ACTION", {"action":f"create subprocess {self.process} to run command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+            self.logger.write("ACTION", {"action":f"create subprocess {self.process} to run command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
             # Create separate threads for capturing stdout and stderr using _stream_reader :
             stdout_thread = threading.Thread(target = self._stream_reader, args = (self.process.stdout, "STDOUT"))
             stderr_thread = threading.Thread(target = self._stream_reader, args = (self.process.stderr, "STDERR"))
             # Write to log file :
-            logger.write("ACTION", {"action":f"create stdout and stderr threads {stdout_thread} and {stderr_thread} to read command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+            self.logger.write("ACTION", {"action":f"create stdout and stderr threads {stdout_thread} and {stderr_thread} to read command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
             # Start the threads :
             stdout_thread.start()
             stderr_thread.start()
             # Write to log file :
-            logger.write("ACTION", {"action":f"start stdout and stderr threads {stdout_thread} and {stderr_thread} to read command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+            self.logger.write("ACTION", {"action":f"start stdout and stderr threads {stdout_thread} and {stderr_thread} to read command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
             # Join both threads :
             stdout_thread.join()
             stderr_thread.join()
             # Write to log file :
-            logger.write("ACTION", {"action":f"join stdout and stderr threads {stdout_thread} and {stderr_thread} to read command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+            self.logger.write("ACTION", {"action":f"join stdout and stderr threads {stdout_thread} and {stderr_thread} to read command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
         # Start the main thread as a daemon to ensure proper closing :
         self.thread = threading.Thread(target = target)
         self.thread.daemon = True  # Make the thread a daemon
         # Write to log file :
-        logger.write("ACTION", {"action":f"create thread {self.thread} to run command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+        self.logger.write("ACTION", {"action":f"create thread {self.thread} to run command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
         self.thread.start()
         # Write to log file :
-        logger.write("ACTION", {"action":f"start thread {self.thread} to run command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+        self.logger.write("ACTION", {"action":f"start thread {self.thread} to run command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
     def stop(self):
         """
@@ -125,24 +126,24 @@ class CommandRunner:
         """
 
         # Write to log file :
-        logger.write("ACTION", {"action":f"stop command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+        self.logger.write("ACTION", {"action":f"stop command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
         # Terminate the subprocess:
         if self.process:
             self.process.terminate()
             self.process.wait()  # Wait for the process to terminate properly
             # Write to log file :
-            logger.write("ACTION", {"action":f"terminate subprocess {self.process} to run command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+            self.logger.write("ACTION", {"action":f"terminate subprocess {self.process} to run command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
         # Trigger the stop event to stop the thread and join it :
         self.stop_event.set()
         # Write to log file :
-        logger.write("EVENT", {"event":"set stop_event","triggered by":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+        self.logger.write("EVENT", {"event":"set stop_event","triggered by":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
         
         if self.thread and self.thread.is_alive():
             self.thread.join()
             # Write to log file :
-            logger.write("ACTION", {"action":f"join thread {self.thread} that ran command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+            self.logger.write("ACTION", {"action":f"join thread {self.thread} that ran command {self.command}", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
 # Example usage :
 if __name__ == "__main__":
