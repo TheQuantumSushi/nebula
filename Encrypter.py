@@ -1,12 +1,18 @@
 import keyring
 from argon2 import PasswordHasher
+import inspect
+import os
 
 class Encrypter:
   """
   Handle sudo passwords by hashing them through Argon2 (with parameters adaptated from machine specs) and safely storing the through keyring
   """
-  def __init__(self):
+  def __init__(self, logger):
+    # Initialize logger and PasswordHasher :
+    self.logger = logger
     self.ph = PasswordHasher()
+    # Write to log file :
+    self.logger.write("ACTION", {"action":"initialize Encrypter instance", "invoker":f"file : {os.path.basename(__file__)}\ninstance : {self}\ncalled by : {inspect.stack()[1].function}", "output":"0"})
 
   def adjust_argon2_parameters(self):
     """
@@ -39,6 +45,8 @@ class Encrypter:
 
     # Update hasher :
     self.ph = PasswordHasher(time_cost = time_cost, memory_cost = memory_cost, parallelism = parallelism)
+    # Write to log file :
+    logger.write("ACTION", {"action":"adjust Argon2 parameters to machine specs", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
   def encrypt_password(self, password):
     """
@@ -47,10 +55,15 @@ class Encrypter:
     self.adjust_argon2_parameters()
     hashed_password = self.ph.hash(password)
     keyring.set_password("system", "sudo_hashed", "hashed_password")
+    # Write to log file :
+    logger.write("ACTION", {"action":"hash and encrypt sudo password", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
   def check_password(self, checked_password):
     """
     Check if the provided password is correct
     """
     hashed_password = keyring.get_password("system", "sudo_hashed")
-    return self.ph.verify(hashed_password, checked_password)
+    is_valid = self.ph.verify(hashed_password, checked_password)
+    # Write to log file :
+    logger.write("ACTION", {"action":"check if provided sudo password is valid", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":str(is_valid)})
+    return is_valid
