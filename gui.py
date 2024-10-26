@@ -6,7 +6,7 @@ https://www.pythonguis.com/tutorials/pyqt6-actions-toolbars-menus/
 
 '''
 
-# Imports :
+# Library imports :
 import sys
 import csv
 import re
@@ -17,27 +17,39 @@ import time
 import os
 import signal
 import keyring
-from CommandRunner import CommandRunner, CommandError
-from encrypter import encrypter
+import inspect
 from PyQt6.QtCore import Qt, QSize, QRunnable, pyqtSlot, QThreadPool
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QApplication, QLabel, QListWidget, QListWidgetItem, QMainWindow, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QSizePolicy, QSpacerItem, QScrollArea)
+# Module imports :
+from CommandRunner import CommandRunner, CommandError
+from Encrypter import Encrypter
+from LogWriter import LogWriter
+
+# Initialize LogWriter :
+logger = LogWriter("log.txt")
+# Write to log file :
+logger.write("ACTION", {"action":"Initialize LogWriter", "invoker":f"file : {os.path.basename(__file__)}", "output":"0"})
 
 # Main window :
 class MainWindow(QMainWindow):
     """
     The GUI window
     """
-    def __init__(self):
+    def __init__(self, logger):
         """
         Initialize the window and variables
         """
         super().__init__()
+        self.logger = logger
+        # Write to log file :
+        logger.write("ACTION", {"action":"Initialize MainWindow", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
         # Load config.json file :
         with open("config.json") as config_file:
             self.config = json.load(config_file)
-        self.vpn_paths = self.config["paths"]["vpns"]
+        # Write to log file :
+        self.logger.write("ACTION", {"action":"Load config.json", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
         # Window style :
         self.setWindowTitle(' ')
@@ -54,6 +66,7 @@ class MainWindow(QMainWindow):
         self.connected_item = None
         self.console_lines = []
         self.process = None
+        self.vpn_paths = self.config["paths"]["vpns"]
 
         # Define widgets :
         self.title_label = QLabel("Nebula")
@@ -123,6 +136,8 @@ class MainWindow(QMainWindow):
         self.central_widget = QWidget()
         self.central_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.central_widget)
+        # Write to log file :
+        self.logger.write("ACTION", {"action":"Configure window and widgets", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
     def add_console_line(self, text):
         """
@@ -130,6 +145,8 @@ class MainWindow(QMainWindow):
         """
         self.console_lines.append(text)
         self.console.setText("<br>".join(self.console_lines))
+        # Write to log file :
+        self.logger.write("ACTION", {"action":f"Add line {text} to console", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
     def add_items_to_list(self, list_widget, items):
         """
@@ -143,7 +160,8 @@ class MainWindow(QMainWindow):
                 icon = QIcon(f"flags/{address[:2]}.png")  # Path to the flag icon
                 list_item.setIcon(icon)
             except:
-                pass
+                # Write to log file :
+                self.logger.write("WARNING", {"message":f"Failed to load icon 'flags/{address[:2]}.png'", "raised by":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}"})
             list_item.setSizeHint(QSize(200, 40))  # Set item size
             list_widget.setIconSize(QSize(20, 20))  # Set icon size
             list_widget.addItem(list_item)
@@ -156,6 +174,8 @@ class MainWindow(QMainWindow):
         vpn_list = []
         for path in self.vpn_paths:
             vpn_list = vpn_list + subprocess.run(['/bin/ls', path, '-Iclient', '-Iserver', '-Iconfigurations'], capture_output=True, text=True).stdout.splitlines()
+            # Write to log file :
+            self.logger.write("COMMAND", {"command":f"/bin/ls {path} -Iclient -Iserver -Iconfigurations", "requires sudo":"no", "invoker":"script", "output (STDOUT stream)":vpn_list, "errors (STDERR Stream)":""})
         return vpn_list
 
     def toggle_connection(self):
@@ -165,7 +185,7 @@ class MainWindow(QMainWindow):
         selected_item = self.get_selected_item()  # get the selected VPN in the list
         if selected_item:
             if not self.connected:  # Connect
-                self.command_runner = CommandRunner(f"/etc/openvpn {selected_item.text()}", True)
+                self.command_runner = CommandRunner(f"/etc/openvpn {selected_item.text()}", self.logger, True)
                 self.command_runner.run()
                 self.connected = True
                 self.vpn_address = selected_item.text()
@@ -187,6 +207,8 @@ class MainWindow(QMainWindow):
 
                 # Move connected item to top:
                 self.move_item_to_top(selected_item)
+                # Write to log file :
+                self.logger.write("EVENT", {"event":f"Connection attempt to VPN {self.vpn_address}","triggered by":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
             else:  # Disconnect
                 self.command_runner.stop()
@@ -202,6 +224,8 @@ class MainWindow(QMainWindow):
 
                 # Remove separator and re-sort list:
                 self.reset_list_order()
+                # Write to log file :
+                self.logger.write("EVENT", {"event":"Disconnection from current VPN","triggered by":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
 
             self.update_connection_status()
 
@@ -275,19 +299,19 @@ class MainWindow(QMainWindow):
             config = json.load(config_file)
         colors = config["colors"]
         scss_content="""
-            $background_color: {background_color};
-            $list_background_color: {list_background_color};
-            $border_color: {border_color};
-            $item_background_color: {item_background_color};
-            $selected_item_background_color: {selected_item_background_color};
-            $main_text_color: {main_text_color};
-            $small_text_color: {small_text_color};
-            $button_text_color: {button_text_color};
-            $connect_button_color: {connect_button_color};
-            $disconnect_button_color: {disconnect_button_color};
-            $scroll_border_color: {scroll_border_color};
+            $background_color:{background_color};
+            $list_background_color:{list_background_color};
+            $border_color:{border_color};
+            $item_background_color:{item_background_color};
+            $selected_item_background_color:{selected_item_background_color};
+            $main_text_color:{main_text_color};
+            $small_text_color:{small_text_color};
+            $button_text_color:{button_text_color};
+            $connect_button_color:{connect_button_color};
+            $disconnect_button_color:{disconnect_button_color};
+            $scroll_border_color:{scroll_border_color};
             QWidget#central_widget {{
-                background-color: $background_color;
+                background-color:$background_color;
             }}
             QListWidget {{
                 background-color: $list_background_color;
@@ -342,13 +366,18 @@ class MainWindow(QMainWindow):
         """
         scss_formatted = scss_content.format(**colors)
         stylesheet = sass.compile(string=scss_formatted)
+        # Write to log file :
+        self.logger.write("ACTION", {"action":"Formatted and compiled stylesheet", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
         return stylesheet
     
 # Start the application :
 if __name__ == '__main__':
-    keyring.set_password("system", "sudo", "your_sudo_password")
+    keyring.set_password("system", "sudo", "Tomtom67*hacunamatata")
+    # Write to log file :
+    logger.write("EVENT", {"event":"Started application","triggered by":f"file : {os.path.basename(__file__)}", "output":"0"})
+    # Create the window
     app = QApplication(sys.argv)
-    main_window = MainWindow()
+    main_window = MainWindow(logger)
     main_window.show()
     # Start the event loop
     sys.exit(app.exec())
