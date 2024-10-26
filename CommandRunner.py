@@ -2,6 +2,7 @@ import subprocess
 import threading
 import time
 import sys
+import shlex
 
 class CommandError(Exception):
     """
@@ -62,25 +63,30 @@ class CommandRunner:
             """
             Define the target for the main thread: the subprocess, and two threads for capturing stdout and stderr
             """
+
+            # Format the command to a list usable by subprocess.Popen and include sudo if required :
+            self.formatted_command = (shlex.split(f"echo {self.sudo_password} | sudo -S " + self.command) if self.sudo_password else shlex.split(self.command)
+
+            # Create the command-executing process :
             self.process = subprocess.Popen(
-                self.command,
+                self.formatted_command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 universal_newlines = True,
                 bufsize = 1
             )
 
-            # Create and start separate threads for capturing stdout and stderr using _stream_reader:
+            # Create and start separate threads for capturing stdout and stderr using _stream_reader :
             stdout_thread = threading.Thread(target = self._stream_reader, args = (self.process.stdout, "STDOUT"))
             stderr_thread = threading.Thread(target = self._stream_reader, args = (self.process.stderr, "STDERR"))
             stdout_thread.start()
             stderr_thread.start()
 
-            # Join both threads:
+            # Join both threads :
             stdout_thread.join()
             stderr_thread.join()
 
-        # Start the main thread as a daemon:
+        # Start the main thread as a daemon to ensure proper closing :
         self.thread = threading.Thread(target = target)
         self.thread.daemon = True  # Make the thread a daemon
         self.thread.start()
