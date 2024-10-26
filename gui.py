@@ -13,13 +13,25 @@ import re
 import json
 import subprocess
 import sass
-from PyQt6.QtCore import Qt, QSize
+import time
+import os
+import signal
+import keyring
+from CommandRunner import CommandRunner, CommandError
+from encrypter import encrypter
+from PyQt6.QtCore import Qt, QSize, QRunnable, pyqtSlot, QThreadPool
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QApplication, QLabel, QListWidget, QListWidgetItem, QMainWindow, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QSizePolicy, QSpacerItem, QScrollArea)
 
 # Main window :
 class MainWindow(QMainWindow):
+    """
+    The GUI window
+    """
     def __init__(self):
+        """
+        Initialize the window and variables
+        """
         super().__init__()
 
         # Load config.json file :
@@ -41,7 +53,7 @@ class MainWindow(QMainWindow):
         self.separator_item = None
         self.connected_item = None
         self.console_lines = []
-        self.SUDO_PASSWORD = 'nice try, but still working on hiding this'
+        self.process = None
 
         # Define widgets :
         self.title_label = QLabel("Nebula")
@@ -153,9 +165,10 @@ class MainWindow(QMainWindow):
         selected_item = self.get_selected_item()  # get the selected VPN in the list
         if selected_item:
             if not self.connected:  # Connect
+                self.command_runner = CommandRunner(f"/etc/openvpn {selected_item.text()}", True)
+                self.command_runner.run()
                 self.connected = True
                 self.vpn_address = selected_item.text()
-                self.run_openvpn(self.vpn_address)
                 self.connected_item = selected_item
                 self.connected_status = "on"
 
@@ -176,6 +189,7 @@ class MainWindow(QMainWindow):
                 self.move_item_to_top(selected_item)
 
             else:  # Disconnect
+                self.command_runner.stop()
                 self.connected = False
                 self.vpn_address = ""
                 self.connected_item = None
@@ -329,26 +343,10 @@ class MainWindow(QMainWindow):
         scss_formatted = scss_content.format(**colors)
         stylesheet = sass.compile(string=scss_formatted)
         return stylesheet
-
-    def run_openvpn(self, address):
-        # Start the subprocess :
-        process = subprocess.Popen(['/bin/sudo', '-S', 'openvpn', '/etc/openvpn/'+address], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-        # Send the password to the process :
-        process.stdin.write(self.SUDO_PASSWORD + '\n')
-        process.stdin.flush()
-        # Continuously read the output :
-        try:
-            for line in process.stdout:
-                print(line, end='')
-        except Exception as e:
-            print(f"Error: {e}")
-        finally:
-            process.stdout.close()
-            process.stderr.close()
-            process.wait()
     
 # Start the application :
 if __name__ == '__main__':
+    keyring.set_password("system", "sudo", "your_sudo_password")
     app = QApplication(sys.argv)
     main_window = MainWindow()
     main_window.show()
