@@ -112,7 +112,7 @@ class CommandRunner:
 # Example usage :
 if __name__ == "__main__":
     try:
-        command_runner = CommandRunner(["/bin/ping", "google.com"])
+        command_runner = CommandRunner("/bin/ping google.com")
         command_runner.run()
         time.sleep(10)
         command_runner.stop()
