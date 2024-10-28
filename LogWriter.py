@@ -32,18 +32,37 @@ class LogWriter:
         self.entry_number = self.config["log"]["entry_number"]
         self.error_number = self.config["log"]["error_number"]
 
+    def _generate_line(self, indent, is_final):
+        if is_final:
+            indentation = f"    {(indent - 1) * "│    "} └── "
+        else:
+            indentation = f"    {(indent - 1) * "│    "} ├── "
+
+    def _display_dict(self, d, indent = 0, prefix = ""):
+        items = list(d.items())
+        with open(self.log_file, 'a') as file:
+            for index, (key, value) in enumerate(items):
+                is_last = index == len(items) - 1
+                if isinstance(value, dict):
+                    # Print the current key with ├── or └──
+                    file.write(f"{prefix}{'└── ' if is_last else '├── '}{key} :\n")
+                    # Add '│   ' if not the last element, else add '    '
+                    new_prefix = prefix + ('    ' if is_last else '│   ')
+                    # Recursive call with updated prefix
+                    self._display_dict(value, indent + 1, new_prefix)
+                else:
+                    # Print the current key-value pair with ├── or └──
+                    file.write(f"{prefix}{'└── ' if is_last else '├── '}{key} : {value}\n")
     def write(self, log_type, args):
         """
         Write a prettified log entry of the specified type to the log file using config.json for argument specification
         """
         self._increment_entry_number(log_type)
         with open(self.log_file, 'a') as file:
-            file.write(f"Entry {self.entry_number} :\n")
-            file.write(f"├── Timestamp : {self._get_timestamp()}\n")
-            file.write(f"└── Type : {log_type}\n")
-            for entry_line in self.config["log"]["types"][log_type][:-1]:
-                file.write(f"    ├── {entry_line} : {args[entry_line]}\n")
-            file.write(f"    └── {self.config["log"]["types"][log_type][-1]} : {args[self.config["log"]["types"][log_type][-1]]}\n")
+            file.write(f"entry {self.entry_number} :\n")
+            file.write(f"├── timestamp : {self._get_timestamp()}\n")
+            file.write(f"└── type : {log_type}\n")
+        self._display_dict(args, 1, "    ")
 
     def flush(self, number_of_entries = 0, inverse = False):
         """
@@ -79,8 +98,6 @@ class LogWriter:
             log_file.writelines(lines)
             log_file.truncate()  # Remove any leftover content
 
-
-
 # Example usage
 if __name__ == "__main__":
     logger = LogWriter("log.txt")
@@ -90,7 +107,7 @@ if __name__ == "__main__":
 logger.write("COMMAND", {"command":"", "requires sudo":"", "invoker":"", "output (STDOUT stream)":"", "errors (STDERR Stream)":""})
 logger.write("INFO", {"message":""})
 logger.write("DEBUG", {"message":""})
-logger.write("WARNING", {"message":"", "raised by":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}"})
-logger.write("EVENT", {"event":"","triggered by":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
-logger.write("ACTION", {"action":"", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+logger.write("WARNING", {"message":"", "raised by":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}})
+logger.write("EVENT", {"event":"","triggered by":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}, "output":"0"})
+logger.write("ACTION", {"action":"", "invoker":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}, "output":"0"})
 """
