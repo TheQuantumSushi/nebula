@@ -12,7 +12,7 @@ class Encrypter:
     self.logger = logger
     self.ph = PasswordHasher()
     # Write to log file :
-    self.logger.write("ACTION", {"action":"initialize Encrypter instance", "invoker":f"file : {os.path.basename(__file__)}\ninstance : {self}\ncalled by : {inspect.stack()[1].function}", "output":"0"})
+    self.logger.write("ACTION", {"action":"initialize Encrypter instance", "invoker":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}, "output":"0"})
 
   def adjust_argon2_parameters(self):
     """
@@ -46,7 +46,7 @@ class Encrypter:
     # Update hasher :
     self.ph = PasswordHasher(time_cost = time_cost, memory_cost = memory_cost, parallelism = parallelism)
     # Write to log file :
-    logger.write("ACTION", {"action":"adjust Argon2 parameters to machine specs", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+    self.logger.write("ACTION", {"action":"adjust Argon2 parameters to machine specs", "invoker":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}, "output":"0"})
 
   def encrypt_password(self, password):
     """
@@ -56,7 +56,7 @@ class Encrypter:
     hashed_password = self.ph.hash(password)
     keyring.set_password("system", "sudo_hashed", "hashed_password")
     # Write to log file :
-    logger.write("ACTION", {"action":"hash and encrypt sudo password", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+    self.logger.write("ACTION", {"action":"hash and encrypt sudo password", "invoker":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}, "output":"0"})
 
   def check_password(self, checked_password):
     """
@@ -65,5 +65,5 @@ class Encrypter:
     hashed_password = keyring.get_password("system", "sudo_hashed")
     is_valid = self.ph.verify(hashed_password, checked_password)
     # Write to log file :
-    logger.write("ACTION", {"action":"check if provided sudo password is valid", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":str(is_valid)})
+    self.logger.write("ACTION", {"action":"check if provided sudo password is valid", "invoker":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}, "output":"0"})
     return is_valid

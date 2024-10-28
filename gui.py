@@ -43,14 +43,14 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.logger = logger
         # Write to log file :
-        logger.write("ACTION", {"action":"Initialize MainWindow", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+        self.logger.write("ACTION", {"action":"Initialize MainWindow", "invoker":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}, "output":"0"})
 
         # Load config.json file :
         with open("config.json") as config_file:
             self.config = json.load(config_file)
         # Write to log file :
-        self.logger.write("ACTION", {"action":"Load config.json", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
-
+        self.logger.write("ACTION", {"action":"Load config.json", "invoker":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}, "output":"0"})
+        
         # Window style :
         self.setWindowTitle(' ')
         self.showMaximized()
@@ -137,7 +137,7 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.central_widget)
         # Write to log file :
-        self.logger.write("ACTION", {"action":"Configure window and widgets", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+        self.logger.write("ACTION", {"action":"Configure window and widgets", "invoker":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}, "output":"0"})
 
     def add_console_line(self, text):
         """
@@ -146,7 +146,7 @@ class MainWindow(QMainWindow):
         self.console_lines.append(text)
         self.console.setText("<br>".join(self.console_lines))
         # Write to log file :
-        self.logger.write("ACTION", {"action":f"Add line {text} to console", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+        self.logger.write("ACTION", {"action":f"Add line {text} to console", "invoker":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}, "output":"0"})
 
     def add_items_to_list(self, list_widget, items):
         """
@@ -161,7 +161,7 @@ class MainWindow(QMainWindow):
                 list_item.setIcon(icon)
             except:
                 # Write to log file :
-                self.logger.write("WARNING", {"message":f"Failed to load icon 'flags/{address[:2]}.png'", "raised by":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}"})
+                self.logger.write("WARNING", {"message":f"Failed to load icon 'flags/{address[:2]}.png'", "raised by":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}})
             list_item.setSizeHint(QSize(200, 40))  # Set item size
             list_widget.setIconSize(QSize(20, 20))  # Set icon size
             list_widget.addItem(list_item)
@@ -175,7 +175,7 @@ class MainWindow(QMainWindow):
         for path in self.vpn_paths:
             vpn_list = vpn_list + subprocess.run(['/bin/ls', path, '-Iclient', '-Iserver', '-Iconfigurations'], capture_output=True, text=True).stdout.splitlines()
             # Write to log file :
-            self.logger.write("COMMAND", {"command":f"/bin/ls {path} -Iclient -Iserver -Iconfigurations", "requires sudo":"no", "invoker":"script", "output (STDOUT stream)":vpn_list, "errors (STDERR Stream)":""})
+            self.logger.write("COMMAND", {"command":f"/bin/ls {path} -Iclient -Iserver -Iconfigurations", "requires sudo":"no", "invoker":"script", "output (STDOUT stream)":"", "errors (STDERR Stream)":""})
         return vpn_list
 
     def toggle_connection(self):
@@ -208,7 +208,7 @@ class MainWindow(QMainWindow):
                 # Move connected item to top:
                 self.move_item_to_top(selected_item)
                 # Write to log file :
-                self.logger.write("EVENT", {"event":f"Connection attempt to VPN {self.vpn_address}","triggered by":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+                self.logger.write("EVENT", {"event":f"Connection attempt to VPN {self.vpn_address}","triggered by":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}, "output":"0"})
 
             else:  # Disconnect
                 self.command_runner.stop()
@@ -225,7 +225,7 @@ class MainWindow(QMainWindow):
                 # Remove separator and re-sort list:
                 self.reset_list_order()
                 # Write to log file :
-                self.logger.write("EVENT", {"event":"Disconnection from current VPN","triggered by":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+                self.logger.write("EVENT", {"event":"Disconnection from current VPN","triggered by":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}, "output":"0"})
 
             self.update_connection_status()
 
@@ -367,7 +367,7 @@ class MainWindow(QMainWindow):
         scss_formatted = scss_content.format(**colors)
         stylesheet = sass.compile(string=scss_formatted)
         # Write to log file :
-        self.logger.write("ACTION", {"action":"Formatted and compiled stylesheet", "invoker":f"file : {os.path.basename(__file__)}\n    instance : {self}\n    called by : {inspect.stack()[1].function}", "output":"0"})
+        self.logger.write("ACTION", {"action":"Formatted and compiled stylesheet", "invoker":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}, "output":"0"})
         return stylesheet
     
 # Start the application :
