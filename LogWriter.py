@@ -32,27 +32,22 @@ class LogWriter:
         self.entry_number = self.config["log"]["entry_number"]
         self.error_number = self.config["log"]["error_number"]
 
-    def _generate_line(self, indent, is_final):
-        if is_final:
-            indentation = f"    {(indent - 1) * "│    "} └── "
-        else:
-            indentation = f"    {(indent - 1) * "│    "} ├── "
-
-    def _display_dict(self, d, indent = 0, prefix = ""):
+    def _display_dict(self, d, indent=0, prefix=""):
         items = list(d.items())
         with open(self.log_file, 'a') as file:
             for index, (key, value) in enumerate(items):
                 is_last = index == len(items) - 1
+                # Print key with proper connector
                 if isinstance(value, dict):
-                    # Print the current key with ├── or └──
                     file.write(f"{prefix}{'└── ' if is_last else '├── '}{key} :\n")
-                    # Add '│   ' if not the last element, else add '    '
+                    # Update prefix for nested items, maintaining connector lines
                     new_prefix = prefix + ('    ' if is_last else '│   ')
-                    # Recursive call with updated prefix
+                    # Recursive call for nested dictionary
                     self._display_dict(value, indent + 1, new_prefix)
                 else:
-                    # Print the current key-value pair with ├── or └──
+                    # Print key-value pair with proper connector
                     file.write(f"{prefix}{'└── ' if is_last else '├── '}{key} : {value}\n")
+
     def write(self, log_type, args):
         """
         Write a prettified log entry of the specified type to the log file using config.json for argument specification
@@ -110,4 +105,5 @@ logger.write("DEBUG", {"message":""})
 logger.write("WARNING", {"message":"", "raised by":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}})
 logger.write("EVENT", {"event":"","triggered by":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}, "output":"0"})
 logger.write("ACTION", {"action":"", "invoker":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}"}, "output":"0"})
+logger.write("ERROR", {"message":"", "raised by":{"file":f"{os.path.basename(__file__)}", "instance":f"{self}", "called by":f"{inspect.stack()[1].function}", "running command":""}})
 """
